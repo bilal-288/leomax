@@ -2,20 +2,25 @@
   <div>
      <button @click="toggleTable" class="toggle-button">{{ showTable ? 'Show Chart' : 'Show Table' }}</button>
 
-     <table v-if="showTable">
+     
+    <table  v-if="showTable">
       <thead>
         <tr>
-          <th>Month</th>
-          <th>Avg Year Temp</th>
           <th>Year</th>
+          <th>Avg Year Temp</th>
+          <th>Month</th>
+          <th>Avg Month Temp</th>
         </tr>
       </thead>
       <tbody>
-        <template v-for="(weatherYear, index) in weatherData" :key="index">
+        <template v-for="(weatherYear, yearIndex) in weatherData" :key="yearIndex">
           <tr v-for="(temp, month) in weatherYear.avgTemperature" :key="month">
+            <template v-if="month === 'January'">
+              <td rowspan="12">{{ weatherYear.year }}</td>
+               <td rowspan="12">{{ weatherYear.avgYearTemp }}</td>
+            </template>
             <td>{{ month }}</td>
             <td>{{ temp }}</td>
-            <td>{{weatherYear.year}}</td>
           </tr>
         </template>
       </tbody>
@@ -23,9 +28,9 @@
 
 
     <div v-else>
-<ul id="users">
-    <li v-for="wd in weatherData" v-bind:key="wd.id">{{ wd.year }}</li>
-  </ul>
+      <ul id="chart">
+          <li v-for="wd in weatherData" v-bind:key="wd.id">{{ wd.year }}</li>
+        </ul>
     </div>
   </div>
 </template>
