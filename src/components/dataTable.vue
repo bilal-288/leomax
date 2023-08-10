@@ -1,9 +1,7 @@
 <template>
   <div>
      <button @click="toggleTable" class="toggle-button">{{ showTable ? 'Show Chart' : 'Show Table' }}</button>
-
-     
-    <table  v-if="showTable">
+      <table  v-if="showTable">
       <thead>
         <tr>
           <th>Year</th>
@@ -28,63 +26,114 @@
 
 
     <div v-else>
-      <ul id="chart">
-          <li v-for="wd in weatherData" v-bind:key="wd.id">{{ wd.year }}</li>
-        </ul>
+<ul id="users">
+    <li v-for="wd in weatherData" v-bind:key="wd.id">{{ wd.year }}</li>
+  </ul>
+  <canvas ref="myChart" id="myChart"></canvas>
     </div>
   </div>
 </template>
 
 <script>
+import Chart from 'chart.js/auto';
 import axios from 'axios';
+
 export default {
-
-   data() {
-    return {
-      showTable: false, 
-      weatherData: [], // This will be populated with data from the API
-    };
+  components:{
+     
   },
-  methods: {
-     toggleTable() {
-      this.showTable = !this.showTable;
+    data() {
+        return {
+            showTable: false,
+            weatherData: [], // This will be populated with data from the API
+            weatherYear:[],
+        };
     },
-    getMonthName(index) {
-      const monthNames = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-      ];
-      return monthNames[index];
-    },
-  },
-  mounted() {
-    // Fetch data from the API using Axios
-    axios.get('/api/weather')
-      .then(response => {
-        // Process the data to ensure all months are present in each year
-        this.weatherData = response.data.data.map(weatherYear => {
-          const avgTemperature = {};
-
-          // Fill missing months with placeholders or defaults
-          const allMonths = [
-            'January', 'February', 'March', 'April', 'May', 'June',
-            'July', 'August', 'September', 'October', 'November', 'December'
-          ];
-
-          allMonths.forEach(month => {
-            avgTemperature[month] = weatherYear.avgTemperature[month] || '-';
+    methods: {
+        toggleTable() {
+            this.showTable = !this.showTable;
+        },
+        getMonthName(index) {
+            const monthNames = [
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+            ];
+            return monthNames[index];
+        },
+        async getData(){
+            await axios.get('/api/weather').then((response)=>{
+             // console.log(response)
+            this.weatherData = response.data.data.map(weatherYear => {
+                const avgTemperature = {};
+                // Fill missing months with placeholders or defaults
+                const allMonths = [
+                    'January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'
+                ];
+                allMonths.forEach(month => {
+                    avgTemperature[month] = weatherYear.avgTemperature[month] || '-';
+                });
+                return {
+                    ...weatherYear,
+                    avgTemperature,
+                };
+            });
+           
+            }).catch(error => {
+            console.error('Error fetching weather data:', error);
           });
+        },
+    },
+    async mounted() {
+     this.getData()
+           
+        const response = await axios.get('/api/weather');
+        const dataa = response.data.data 
+        
+        const years = dataa.map(item => item.year);
+      //  const avgTemperatures = dataa.map(item => item.avgYearTemp);
+        const months = Object.keys(dataa[0].avgTemperature);
 
-          return {
-            ...weatherYear,
-            avgTemperature,
-          };
-        });
-      })
-      .catch(error => {
-        console.error('Error fetching weather data:', error);
-      });
-  },
+        const datasets = months.map(month => ({
+          label: month,
+          data: dataa.map(item => item.avgTemperature[month]),
+          borderColor: 'grey', 
+          borderWidth: 2,
+          fill: false
+        }));
+
+  const ctx = document.getElementById('myChart')
+ 
+ const myChart =  new Chart(ctx, {
+    type: 'line', 
+    data: {
+      labels: years, 
+      datasets
+    },
+    options: {
+            scales: {
+              x: {
+                beginAtZero: false,
+                title: {
+                  display: true,
+                  text: 'Year'
+                }
+              },
+              y: {
+                beginAtZero: false,
+                title: {
+                  display: true,
+                  text: 'Average Temperature'
+                }
+              }
+            }
+          }
+  });
+
+  myChart;
+},
+
+    
 };
 </script>
 
